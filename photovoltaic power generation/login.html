@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>川奇园区光伏发电看板 - 登录</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --main-bg-color: #0A1B3A;
+            --panel-bg-color: rgba(20, 46, 90, 0.8);
+            --highlight-color: #00E6FF;
+            --success-color: #A9FDB6;
+            --text-color: #FFFFFF;
+            --border-glow-color: rgba(0, 230, 255, 0.5);
+            --text-glow-color: rgba(0, 230, 255, 0.7);
+        }
+
+        body {
+            background-color: var(--main-bg-color);
+            color: var(--text-color);
+            font-family: 'Titillium Web', 'Microsoft YaHei', sans-serif;
+            background-image: 
+                radial-gradient(circle at 25% 25%, rgba(0, 230, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(169, 253, 182, 0.1) 0%, transparent 50%),
+                linear-gradient(45deg, rgba(0, 0, 0, 0.1) 25%, transparent 25%),
+                linear-gradient(-45deg, rgba(0, 0, 0, 0.1) 25%, transparent 25%);
+            background-size: 100px 100px, 100px 100px, 20px 20px, 20px 20px;
+            background-repeat: repeat;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-container {
+            background-color: var(--panel-bg-color);
+            border: 2px solid var(--border-glow-color);
+            border-radius: 16px;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 0 30px var(--border-glow-color);
+            padding: 48px;
+            text-align: center;
+            max-width: 480px;
+            width: 90%;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo {
+            margin-bottom: 32px;
+        }
+
+        .logo svg {
+            width: 80px;
+            height: 80px;
+            color: var(--highlight-color);
+            filter: drop-shadow(0 0 20px var(--text-glow-color));
+        }
+
+        .title {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--highlight-color);
+            text-shadow: 0 0 20px var(--text-glow-color);
+        }
+
+        .subtitle {
+            font-size: 16px;
+            opacity: 0.8;
+            margin-bottom: 40px;
+            line-height: 1.5;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+            text-align: left;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--highlight-color);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 16px 20px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(0, 230, 255, 0.3);
+            border-radius: 8px;
+            color: var(--text-color);
+            font-size: 16px;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .form-input:focus {
+            border-color: var(--highlight-color);
+            box-shadow: 0 0 20px rgba(0, 230, 255, 0.3);
+            background-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .form-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--highlight-color), #0099CC);
+            border: none;
+            border-radius: 8px;
+            color: var(--main-bg-color);
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 16px;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 230, 255, 0.4);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        .error-message {
+            color: #E46965;
+            font-size: 14px;
+            margin-top: 16px;
+            padding: 12px;
+            background-color: rgba(228, 105, 101, 0.1);
+            border: 1px solid rgba(228, 105, 101, 0.3);
+            border-radius: 6px;
+            display: none;
+        }
+
+        .footer {
+            margin-top: 32px;
+            font-size: 12px;
+            opacity: 0.6;
+            line-height: 1.4;
+        }
+
+        .loading {
+            display: none;
+            margin-left: 8px;
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid transparent;
+            border-top: 2px solid currentColor;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .login-container {
+                padding: 32px 24px;
+                margin: 20px;
+            }
+            
+            .title {
+                font-size: 28px;
+            }
+            
+            .logo svg {
+                width: 64px;
+                height: 64px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+        </div>
+        
+        <h1 class="title">川奇园区光伏发电看板</h1>
+        <p class="subtitle">请输入访问密码以查看能源监视数据</p>
+        
+        <form id="loginForm" onsubmit="return false;">
+            <div class="form-group">
+                <label for="password" class="form-label">访问密码</label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    class="form-input" 
+                    placeholder="请输入密码"
+                    autocomplete="current-password"
+                    required
+                >
+            </div>
+            
+            <button type="submit" class="login-btn" onclick="checkPassword()">
+                进入看板
+                <span class="loading" id="loading"></span>
+            </button>
+        </form>
+        
+        <div class="error-message" id="errorMessage">
+            密码错误，请重新输入
+        </div>
+        
+        <div class="footer">
+            <p>© 2025 川奇园区光伏发电项目</p>
+            <p>本系统仅供内部使用，请妥善保管访问密码</p>
+        </div>
+    </div>
+
+    <script>
+        // 密码验证函数
+        function checkPassword() {
+            const password = document.getElementById('password').value;
+            const errorMessage = document.getElementById('errorMessage');
+            const loading = document.getElementById('loading');
+            const loginBtn = document.querySelector('.login-btn');
+            
+            // 隐藏错误信息
+            errorMessage.style.display = 'none';
+            
+            // 显示加载状态
+            loading.style.display = 'inline-block';
+            loginBtn.disabled = true;
+            
+            // 模拟验证延迟
+            setTimeout(() => {
+                if (password === 'josun888') {
+                    // 密码正确，存储验证状态
+                    localStorage.setItem('dashboard_authenticated', 'true');
+                    localStorage.setItem('dashboard_auth_time', Date.now().toString());
+                    
+                    // 跳转到主看板
+                    window.location.href = './index.html';
+                } else {
+                    // 密码错误
+                    errorMessage.style.display = 'block';
+                    document.getElementById('password').value = '';
+                    document.getElementById('password').focus();
+                }
+                
+                // 隐藏加载状态
+                loading.style.display = 'none';
+                loginBtn.disabled = false;
+            }, 800);
+        }
+        
+        // 回车键提交
+        document.getElementById('password').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkPassword();
+            }
+        });
+        
+        // 页面加载时聚焦到密码输入框
+        window.addEventListener('load', function() {
+            document.getElementById('password').focus();
+        });
+        
+        // 检查是否已经登录
+        function checkAuthStatus() {
+            const authenticated = localStorage.getItem('dashboard_authenticated');
+            const authTime = localStorage.getItem('dashboard_auth_time');
+            
+            if (authenticated === 'true' && authTime) {
+                // 检查登录是否在24小时内
+                const now = Date.now();
+                const authTimestamp = parseInt(authTime);
+                const hoursDiff = (now - authTimestamp) / (1000 * 60 * 60);
+                
+                if (hoursDiff < 24) {
+                    // 24小时内有效，直接跳转
+                    window.location.href = './index.html';
+                } else {
+                    // 超过24小时，清除状态
+                    localStorage.removeItem('dashboard_authenticated');
+                    localStorage.removeItem('dashboard_auth_time');
+                }
+            }
+        }
+        
+        // 页面加载时检查认证状态
+        checkAuthStatus();
+    </script>
+</body>
+</html> 
