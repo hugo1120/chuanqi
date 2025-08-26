@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>川奇园区光伏发电能源监视看板</title>
+    <!-- Local ECharts library -->
+    <script src="./echarts.min.js"></script>
+    <!-- Google Fonts for a tech-style font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Define custom styles for the dashboard */
+        :root {
+            --main-bg-color: #0A1B3A;
+            --panel-bg-color: rgba(20, 46, 90, 0.7);
+            --highlight-color: #00E6FF;
+            --success-color: #A9FDB6;
+            --warning-color: #FFB400;
+            --danger-color: #E46965;
+            --text-color: #FFFFFF;
+            --border-glow-color: rgba(0, 230, 255, 0.5);
+            --text-glow-color: rgba(0, 230, 255, 0.7);
+        }
+
+        body {
+            background-color: var(--main-bg-color);
+            color: var(--text-color);
+            font-family: 'Titillium Web', 'Microsoft YaHei', sans-serif;
+            background-image: 
+                radial-gradient(circle at 25% 25%, rgba(0, 230, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(169, 253, 182, 0.1) 0%, transparent 50%),
+                linear-gradient(45deg, rgba(0, 0, 0, 0.1) 25%, transparent 25%),
+                linear-gradient(-45deg, rgba(0, 0, 0, 0.1) 25%, transparent 25%);
+            background-size: 100px 100px, 100px 100px, 20px 20px, 20px 20px;
+            background-repeat: repeat;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Main container optimized for 1920x1080 */
+        .main-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            grid-template-rows: 80px 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+            gap: 16px;
+            height: 100vh;
+            padding: 16px;
+            max-width: 1920px;
+            margin: 0 auto;
+        }
+
+        /* General panel styling with glow effect */
+        .panel {
+            background-color: var(--panel-bg-color);
+            border: 1px solid rgba(0, 230, 255, 0.3);
+            border-radius: 8px;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 0 15px var(--border-glow-color);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .panel-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--highlight-color);
+            text-shadow: 0 0 8px var(--text-glow-color);
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--highlight-color);
+            margin-bottom: 16px;
+            flex-shrink: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        /* Styles for filter buttons */
+        .filter-btn-group {
+            display: flex;
+            gap: 4px;
+        }
+
+        .filter-btn-group button {
+            background-color: rgba(0, 230, 255, 0.1);
+            border: 1px solid rgba(0, 230, 255, 0.4);
+            padding: 4px 12px;
+            font-size: 12px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            color: var(--text-color);
+            cursor: pointer;
+        }
+
+        .filter-btn-group button:hover {
+            background-color: rgba(0, 230, 255, 0.3);
+        }
+
+        .filter-btn-group button.active {
+            background-color: var(--highlight-color);
+            color: var(--main-bg-color);
+            font-weight: bold;
+            box-shadow: 0 0 10px var(--highlight-color);
+        }
+
+        /* Glow effect for key text elements */
+        .text-glow {
+            text-shadow: 0 0 8px var(--text-glow-color);
+        }
+
+        /* Header styles */
+        .header {
+            grid-column: 1 / -1;
+            grid-row: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        .header-time {
+            position: absolute;
+            right: 16px;
+            text-align: right;
+        }
+
+        .header-time .time {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .header-time .date {
+            font-size: 16px;
+            opacity: 0.8;
+        }
+
+        /* Left panel */
+        .left-panel {
+            grid-column: 1;
+            grid-row: 2 / -1;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .station-info {
+            flex-shrink: 0;
+        }
+
+        .station-info ul {
+            list-style: none;
+        }
+
+        .station-info li {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .generation-data {
+            flex-shrink: 0;
+        }
+
+        .generation-data ul {
+            list-style: none;
+        }
+
+        .generation-data li {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            font-size: 18px;
+        }
+
+        .generation-data .value {
+            font-weight: bold;
+            color: var(--highlight-color);
+        }
+
+        .generation-chart-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Middle panels */
+        .middle-top {
+            grid-column: 2 / 4;
+            grid-row: 2 / 5;
+        }
+
+        .consumption-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .consumption-table th,
+        .consumption-table td {
+            border: 1px solid rgba(0, 230, 255, 0.3);
+            padding: 12px 8px;
+            text-align: center;
+        }
+
+        .consumption-table th {
+            background-color: rgba(0, 230, 255, 0.2);
+            color: var(--highlight-color);
+            font-weight: 600;
+        }
+
+        .middle-image {
+            grid-column: 2 / 4;
+            grid-row: 5 / 9;
+            position: relative;
+        }
+
+        .middle-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .image-overlay {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            z-index: 10;
+        }
+
+        .middle-bottom {
+            grid-column: 2 / 4;
+            grid-row: 9 / -1;
+        }
+
+        .env-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            text-align: center;
+            padding: 16px 8px;
+        }
+
+        .env-stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            transition: transform 0.2s ease;
+        }
+
+        .env-stat:hover {
+            transform: translateY(-2px);
+        }
+
+        .env-stat .icon {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 12px;
+            fill: var(--success-color);
+            stroke: var(--success-color);
+        }
+
+        .env-stat .value {
+            font-size: 32px;
+            font-weight: bold;
+            color: var(--success-color);
+            text-shadow: 0 0 8px var(--success-color);
+        }
+
+        .env-stat .label {
+            font-size: 16px;
+            opacity: 0.9;
+            margin-top: 8px;
+            font-weight: 500;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        /* Right panel */
+        .right-top {
+            grid-column: 4;
+            grid-row: 2 / 7;
+        }
+
+        .regional-data ul {
+            list-style: none;
+            margin-bottom: 16px;
+        }
+
+        .regional-data li {
+            display: flex;
+            justify-content: space-between;
+            margin: 4px 0;
+            font-size: 14px;
+        }
+
+        .regional-data .value {
+            font-weight: bold;
+            color: var(--highlight-color);
+        }
+
+        .right-bottom {
+            grid-column: 4;
+            grid-row: 7 / -1;
+        }
+
+        .comparison-stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 16px 0;
+            flex-shrink: 0;
+        }
+
+        .comparison-stat {
+            text-align: center;
+        }
+
+        .comparison-stat .value {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--success-color);
+        }
+
+        .comparison-stat .label {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-top: 4px;
+        }
+
+        /* Chart containers */
+        .chart-container {
+            flex: 1;
+            min-height: 200px;
+        }
+
+        /* Responsive adjustments for smaller screens */
+        @media (max-width: 1920px) {
+            .main-container {
+                max-width: 100%;
+            }
+        }
+
+        @media (max-width: 1440px) {
+            .header h1 {
+                font-size: 28px;
+            }
+            
+            .header-time .time {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Header -->
+        <header class="panel header">
+            <div class="header-content">
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <h1 class="text-glow">川奇园区光伏发电能源监视看板</h1>
+            </div>
+            <div class="header-time">
+                <div id="current-time" class="time"></div>
+                <div id="current-date" class="date"></div>
+            </div>
+        </header>
+
+        <!-- Left Panel -->
+        <aside class="left-panel">
+            <div class="panel station-info">
+                <h3 class="panel-title">电站信息</h3>
+                <ul>
+                    <li><span>电站名称:</span> <span>川奇园区光伏基地</span></li>
+                    <li><span>电站地址:</span> <span>扬州市经济开发区吴州西路8号</span></li>
+                    <li><span>装机容量:</span> <span>9.972MW</span></li>
+                    <li><span>并网时间:</span> <span>2025-05-01</span></li>
+                </ul>
+            </div>
+            
+            <div class="panel generation-data">
+                <div class="panel-title">
+                    <span>光伏发电</span>
+                    <div class="filter-btn-group">
+                        <button>日</button><button class="active">月</button><button>年</button>
+                    </div>
+                </div>
+                <ul>
+                    <li><span>发电量:</span> <span class="value text-glow">1,186,600 kWh</span></li>
+                    <li><span>消纳量:</span> <span class="value text-glow">953,550 kWh</span></li>
+                    <li><span>消纳占比:</span> <span class="value text-glow">80.4%</span></li>
+                </ul>
+            </div>
+            
+            <div class="panel generation-chart-panel">
+                <div class="panel-title">
+                    <span>发电统计分析</span>
+                    <div class="filter-btn-group" id="generation-filter">
+                        <button data-period="day" class="active">日</button>
+                        <button data-period="month">月</button>
+                        <button data-period="year">年</button>
+                    </div>
+                </div>
+                <div id="generation-chart" class="chart-container"></div>
+            </div>
+        </aside>
+
+        <!-- Middle Top Panel -->
+        <div class="panel middle-top">
+            <h3 class="panel-title">光伏用电统计</h3>
+            <table class="consumption-table">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>用电量</th>
+                        <th>市电量</th>
+                        <th>发电量</th>
+                        <th>消纳量</th>
+                        <th>再生能源占比</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <th>累计</th>
+                        <td>12,171,892 kWh</td>
+                        <td>86,900,321 kWh</td>
+                        <td>4,377,660 kWh</td>
+                        <td>3,481,860 kWh</td>
+                        <td>28.60%</td>
+                    </tr>
+                    <tr>
+                        <th>当日</th>
+                        <td>157,410 kWh</td>
+                        <td>100,500 kWh</td>
+                        <td>71,138 kWh</td>
+                        <td>56,910 kWh</td>
+                        <td>36.20%</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Middle Image Panel -->
+        <main class="panel middle-image">
+            <img src="./厂房照片.jpg" class="w-full h-full object-cover" alt="川奇园区厂房现场照片">
+            <div class="image-overlay">
+                <h4 class="text-glow">现场图片</h4>
+            </div>
+        </main>
+
+        <!-- Middle Bottom Panel -->
+        <section class="panel middle-bottom">
+            <h3 class="panel-title">累计节能减排统计</h3>
+            <div class="env-stats">
+                <div class="env-stat">
+                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
+                        <!-- CO₂ 减排图标 - 环保叶子与CO₂分子 -->
+                        <path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" 
+                              d="M3 12c0 7 2 9 9 9s9-2 9-9-2-9-9-9-9 2-9 9z"/>
+                        <path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" 
+                              d="M12 3v2M12 19v2M3 12h2M19 12h2"/>
+                        <circle cx="8" cy="10" r="1.5" fill="currentColor"/>
+                        <circle cx="16" cy="10" r="1.5" fill="currentColor"/>
+                        <circle cx="12" cy="14" r="2" fill="currentColor"/>
+                        <text x="12" y="18" text-anchor="middle" font-size="3" fill="currentColor">CO₂</text>
+                    </svg>
+                    <div class="value">1,985.70</div>
+                    <div class="label">累计CO₂减排(吨)</div>
+                </div>
+                <div class="env-stat">
+                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
+                        <!-- 树木图标 -->
+                        <path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" 
+                              d="M12 20v-8"/>
+                        <!-- 树干 -->
+                        <path stroke="currentColor" stroke-width="3" stroke-linecap="round" 
+                              d="M12 12v8"/>
+                        <!-- 树冠第一层 -->
+                        <ellipse cx="12" cy="8" rx="6" ry="4" fill="currentColor" opacity="0.8"/>
+                        <!-- 树冠第二层 -->
+                        <ellipse cx="12" cy="6" rx="4.5" ry="3" fill="currentColor" opacity="0.9"/>
+                        <!-- 树冠第三层 -->
+                        <ellipse cx="12" cy="4.5" rx="3" ry="2" fill="currentColor"/>
+                        <!-- 树根装饰 -->
+                        <path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" 
+                              d="M8 20c0-1 1-2 2-2M16 20c0-1-1-2-2-2"/>
+                    </svg>
+                    <div class="value">108,508</div>
+                    <div class="label">等效植树(棵)</div>
+                </div>
+                <div class="env-stat">
+                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
+                        <!-- 煤炭节约图标 - 煤块与向下箭头表示减少 -->
+                        <!-- 煤块1 -->
+                        <path stroke="currentColor" stroke-width="2" fill="currentColor" opacity="0.7"
+                              d="M6 8c-1 0-2 1-2 2v4c0 1 1 2 2 2h3c1 0 2-1 2-2v-4c0-1-1-2-2-2H6z"/>
+                        <!-- 煤块2 -->
+                        <path stroke="currentColor" stroke-width="2" fill="currentColor" opacity="0.8"
+                              d="M13 6c-1 0-2 1-2 2v6c0 1 1 2 2 2h4c1 0 2-1 2-2V8c0-1-1-2-2-2h-4z"/>
+                        <!-- 向下减少箭头 -->
+                        <path stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" 
+                              d="M12 2v6M8 6l4 4 4-4"/>
+                        <!-- 节约效果线条 -->
+                        <path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.6"
+                              d="M3 18h18"/>
+                        <path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.4"
+                              d="M5 20h14"/>
+                    </svg>
+                    <div class="value">1,020.18</div>
+                    <div class="label">节约标准煤(吨)</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Right Top Panel -->
+        <section class="panel right-top">
+            <div class="panel-title">
+                <span>各区用电占比</span>
+                <div class="filter-btn-group">
+                    <button class="active">日</button><button>月</button><button>年</button>
+                </div>
+            </div>
+            <div class="regional-data">
+                <ul>
+                    <li><span>总用电:</span> <span class="value text-glow">152,410 kWh</span></li>
+                    <li><span>汉川光伏:</span> <span class="value text-glow">40,640 kWh</span></li>
+                    <li><span>科龙光伏:</span> <span class="value text-glow">16,270 kWh</span></li>
+                    <li><span>汉川市电:</span> <span class="value text-glow">77,200 kWh</span></li>
+                    <li><span>科龙市电:</span> <span class="value text-glow">18,300 kWh</span></li>
+                </ul>
+            </div>
+            <div id="regional-pie-chart" class="chart-container"></div>
+        </section>
+
+        <!-- Right Bottom Panel -->
+        <section class="panel right-bottom">
+            <div class="panel-title">
+                <span>发电量同比/环比分析</span>
+                <div class="filter-btn-group" id="comparison-filter">
+                    <button data-period="day">日</button>
+                    <button data-period="month" class="active">月</button>
+                    <button data-period="year">年</button>
+                </div>
+            </div>
+            <div class="comparison-stats">
+                <div class="comparison-stat">
+                    <div id="mom-change" class="value">▲ 5.8%</div>
+                    <div id="mom-label" class="label">环比上月</div>
+                </div>
+                <div class="comparison-stat">
+                    <div id="yoy-change" class="value">▲ 12.3%</div>
+                    <div id="yoy-label" class="label">同比去年</div>
+                </div>
+            </div>
+            <div id="comparison-chart" class="chart-container"></div>
+        </section>
+    </div>
+
+    <script>
+        // --- ECharts Instances ---
+        const generationChart = echarts.init(document.getElementById('generation-chart'));
+        const regionalPieChart = echarts.init(document.getElementById('regional-pie-chart'));
+        const comparisonChart = echarts.init(document.getElementById('comparison-chart'));
+        
+        // --- CHART DATA (Static simulation) ---
+        const chartData = {
+            day: { categories: ['04h', '06h', '08h', '10h', '12h', '14h', '16h', '18h'], generation: [0, 150, 800, 1800, 2500, 2200, 1200, 300], power: [10, 80, 450, 850, 1100, 950, 500, 100] },
+            month: { categories: ['W1', 'W2', 'W3', 'W4'], generation: [15000, 18500, 17200, 19000], power: [800, 950, 900, 1000] },
+            year: { categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], generation: [5.5, 5.8, 6.5, 7.2, 8.0, 8.5, 9.0, 8.8, 7.9, 7.1, 6.2, 5.6].map(v => v * 10000), power: [900, 920, 950, 1000, 1100, 1150, 1200, 1180, 1100, 1050, 980, 910] }
+        };
+
+        const comparisonData = {
+            day: { categories: ['08h', '10h', '12h', '14h', '16h'], current: [800, 1800, 2500, 2200, 1200], previous: [750, 1750, 2400, 2150, 1100], mom: { value: '3.5%', label: '环比昨日' }, yoy: { value: '9.8%', label: '同比上周' } },
+            month: { categories: ['W1', 'W2', 'W3', 'W4'], current: [1.5, 1.85, 1.72, 1.9], previous: [1.4, 1.7, 1.65, 1.8], mom: { value: '5.8%', label: '环比上月' }, yoy: { value: '12.3%', label: '同比去年' } },
+            year: { categories: ['Q1', 'Q2', 'Q3', 'Q4'], current: [17.8, 23.7, 25.7, 18.9], previous: [16.5, 21.0, 23.1, 17.5], mom: { value: '8.2%', label: '环比上季度' }, yoy: { value: '15.1%', label: '同比去年' } }
+        };
+
+        // --- Generation Chart Logic ---
+        let generationOption = {
+            tooltip: { trigger: 'axis', backgroundColor: 'rgba(0,0,0,0.7)', textStyle: { color: '#fff' } },
+            legend: { data: ['发电量', '功率'], textStyle: { color: 'rgba(255, 255, 255, 0.8)' }, top: '5%' },
+            grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+            xAxis: { type: 'category', boundaryGap: false, data: [], axisLine: { lineStyle: { color: 'rgba(255,255,255,0.5)' } } },
+            yAxis: [
+                { type: 'value', name: '发电量(kWh)', nameTextStyle: { color: 'rgba(255,255,255,0.7)' }, axisLine: { show: true, lineStyle: { color: 'rgba(255,255,255,0.5)' } }, splitLine: { lineStyle: { color: 'rgba(255,255,255,0.1)' } } },
+                { type: 'value', name: '功率(kW)', nameTextStyle: { color: 'rgba(255,255,255,0.7)' }, axisLine: { show: true, lineStyle: { color: 'rgba(255,255,255,0.5)' } }, splitLine: { show: false } }
+            ],
+            series: [
+                { name: '发电量', type: 'bar', yAxisIndex: 0, itemStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: 'rgba(0, 230, 255, 0.8)' }, { offset: 1, color: 'rgba(0, 230, 255, 0.2)' }]) }, data: [] },
+                { name: '功率', type: 'line', yAxisIndex: 1, smooth: true, showSymbol: false, lineStyle: { width: 3, color: '#A9FDB6' }, areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: 'rgba(169, 253, 182, 0.3)' }, { offset: 1, color: 'rgba(169, 253, 182, 0)' }]) }, data: [] }
+            ]
+        };
+        function updateGenerationChart(period) {
+            generationOption.xAxis.data = chartData[period].categories;
+            generationOption.series[0].data = chartData[period].generation;
+            generationOption.series[1].data = chartData[period].power;
+            generationChart.setOption(generationOption);
+        }
+        
+        // --- Comparison Chart Logic ---
+        const comparisonOption = {
+            tooltip: { trigger: 'axis' },
+            legend: { data: ['本期', '上期'], textStyle: { color: 'rgba(255, 255, 255, 0.8)' }, top: 0 },
+            grid: { left: '3%', right: '10%', bottom: '3%', top: '30%', containLabel: true },
+            xAxis: { type: 'category', data: [], axisLine: { lineStyle: { color: 'rgba(255,255,255,0.5)' } } },
+            yAxis: { type: 'value', name: '万kWh', axisLine: { show: true }, splitLine: { lineStyle: { color: 'rgba(255,255,255,0.1)' } } },
+            series: [
+                { name: '本期', type: 'bar', data: [], itemStyle: { color: '#00E6FF' } },
+                { name: '上期', type: 'bar', data: [], itemStyle: { color: '#A9FDB6' } }
+            ]
+        };
+        function updateComparisonChart(period) {
+            const data = comparisonData[period];
+            comparisonOption.xAxis.data = data.categories;
+            comparisonOption.series[0].data = data.current;
+            comparisonOption.series[1].data = data.previous;
+            
+            const momChangeEl = document.getElementById('mom-change');
+            const yoyChangeEl = document.getElementById('yoy-change');
+            momChangeEl.textContent = `▲ ${comparisonData[period].mom.value}`;
+            yoyChangeEl.textContent = `▲ ${comparisonData[period].yoy.value}`;
+            document.getElementById('mom-label').textContent = comparisonData[period].mom.label;
+            document.getElementById('yoy-label').textContent = comparisonData[period].yoy.label;
+            
+            comparisonChart.setOption(comparisonOption);
+        }
+
+        // --- Regional Pie Chart Logic ---
+        const regionalPieOption = {
+            tooltip: { trigger: 'item', formatter: '{a} <br/>{b}: {c} kWh ({d}%)' },
+            legend: { show: false },
+            series: [{
+                name: '各区用电', type: 'pie', radius: '70%', center: ['50%', '55%'],
+                label: { show: true, formatter: '{b}\n{d}%', fontSize: 12, color: '#fff' },
+                labelLine: { length: 8, length2: 8 },
+                data: [
+                    { value: 40640, name: '汉川光伏' }, { value: 16270, name: '科龙光伏' },
+                    { value: 77200, name: '汉川市电' }, { value: 18300, name: '科龙市电' }
+                ],
+                color: ['#00E6FF', '#A9FDB6', '#FFB400', '#E46965']
+            }]
+        };
+        regionalPieChart.setOption(regionalPieOption);
+
+        // --- Event Listeners ---
+        document.getElementById('generation-filter').addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON') {
+                const period = e.target.dataset.period;
+                document.querySelectorAll('#generation-filter button').forEach(btn => btn.classList.remove('active'));
+                e.target.classList.add('active');
+                updateGenerationChart(period);
+            }
+        });
+        document.getElementById('comparison-filter').addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON') {
+                const period = e.target.dataset.period;
+                document.querySelectorAll('#comparison-filter button').forEach(btn => btn.classList.remove('active'));
+                e.target.classList.add('active');
+                updateComparisonChart(period);
+            }
+        });
+
+        // --- Live Clock ---
+        function updateTime() {
+            const now = new Date();
+            const timeEl = document.getElementById('current-time');
+            const dateEl = document.getElementById('current-date');
+            if(timeEl) timeEl.textContent = now.toLocaleTimeString('zh-CN', { hour12: false });
+            if(dateEl) dateEl.textContent = now.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        // --- Initial Chart Load ---
+        updateGenerationChart('day');
+        updateComparisonChart('month');
+
+        // --- Resize charts on window resize ---
+        window.addEventListener('resize', () => {
+            setTimeout(() => {
+                generationChart.resize();
+                regionalPieChart.resize();
+                comparisonChart.resize();
+            }, 200);
+        });
+    </script>
+</body>
+</html> 
